@@ -1,0 +1,16 @@
+{
+  "node_name": "My Agent Node",
+  "node_key": "cy_node_EXAMPLE_KEY",
+  "gateway_url": "https://api.your-domain.com",
+  "git_tokens": [
+    {
+      "name": "Personal GitHub",
+      "type": "GITHUB",
+      "url_pattern": "github.com/username",
+      "token": "ghp_YOUR_TOKEN_HERE"
+    }
+  ],
+  "search_paths": [
+    "/absolute/path/to/your/git/repos"
+  ]
+}
