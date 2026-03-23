@@ -45,7 +45,6 @@ func main() {
 		sig := <-sigChan
 		log.Printf("\n🛑 Received signal: %v. Cleaning up...", sig)
 		
-		// Tell the hub we are going offline
 		if nodeID != "" {
 			log.Println("👋 Sending offline status to hub...")
 			client.UpdateStatus(cfg, "offline")
@@ -55,34 +54,30 @@ func main() {
 		os.Exit(0)
 	}()
 
-	// --- 2. Initial registration ---
-	log.Println("🛰️ Registering node...")
+	// --- 2. Registration & Real-time loop ---
 	for {
+		log.Println("🛰️ Registering node and sending pulse...")
 		id, err := client.RegisterNode(cfg)
 		if err != nil {
-			log.Printf("⚠️ Registration failed, retrying in 5s: %v", err)
-			time.Sleep(5 * time.Second)
+			log.Printf("⚠️ Handshake failed, retrying in 10s: %v", err)
+			time.Sleep(10 * time.Second)
 			continue
 		}
+
 		if id != "" {
 			mu.Lock()
 			nodeID = id
 			mu.Unlock()
-			log.Printf("✅ Node registered with ID: %s", id)
-			break
+			log.Printf("✅ Node uplink active (ID: %s)", id)
 		}
-		time.Sleep(5 * time.Second)
-	}
 
-	// --- 3. Real-time loop ---
-	log.Println("⚡ Real-time command uplink active.")
-	for {
-		err := client.StreamCommands(func(cmd firebase.Command) {
+		// SSE stream will block here until disconnected
+		err = client.StreamCommands(func(cmd firebase.Command) {
 			executeCommand(client, cmd)
 		})
 		
 		if err != nil {
-			log.Printf("⏳ Stream disconnected, retrying in 5s: %v", err)
+			log.Printf("⏳ Connection lost: %v. Attempting to reconnect...", err)
 			time.Sleep(5 * time.Second)
 		}
 	}
